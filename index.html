@@ -71,6 +71,11 @@
         .signature-container {
             margin-top: 20px;
         }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
         canvas {
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -106,6 +111,7 @@
                 hoursInput.type = 'number';
                 hoursInput.name = 'hoursWorked' + i;
                 hoursInput.min = 0;
+                hoursInput.max = 24;
                 hoursInput.required = true;
                 workerDiv.appendChild(hoursInput);
 
@@ -258,10 +264,11 @@
         <div class="signature-container">
             <label for="signaturePad">Supervisor Signature:</label>
             <canvas id="signaturePad"></canvas>
-            <button type="button" id="clearSignature">Clear Signature</button>
+            <div class="button-container">
+                <button type="button" id="clearSignature">Clear Signature</button>
+                <input type="submit" value="Submit">
+            </div>
         </div>
-
-        <input type="submit" value="Submit">
     </form>
 </body>
 </html>
