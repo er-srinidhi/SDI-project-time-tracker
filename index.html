@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDI Project Time Tracker</title>
+    <title>Project Time Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f4f4f9;
-            border: 10px solid #007bff;
             box-sizing: border-box;
         }
         h1 {
@@ -69,6 +68,15 @@
             width: 150px;
             height: auto;
         }
+        .signature-container {
+            margin-top: 20px;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            height: 200px;
+        }
     </style>
     <script>
         function generateWorkerFields() {
@@ -119,14 +127,88 @@
             }
             return true;
         }
+
+        function initSignaturePad() {
+            const canvas = document.getElementById('signaturePad');
+            const context = canvas.getContext('2d');
+            let isDrawing = false;
+
+            canvas.addEventListener('mousedown', (event) => {
+                isDrawing = true;
+                context.beginPath();
+                context.moveTo(event.offsetX, event.offsetY);
+            });
+
+            canvas.addEventListener('mousemove', (event) => {
+                if (isDrawing) {
+                    context.lineTo(event.offsetX, event.offsetY);
+                    context.stroke();
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+            });
+
+            canvas.addEventListener('mouseout', () => {
+                isDrawing = false;
+            });
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+
+            const projectName = document.getElementById('projectName').value;
+            const supervisorName = document.getElementById('supervisorName').value;
+            const date = document.getElementById('date').value;
+            const numWorkers = document.getElementById('numWorkers').value;
+
+            const workers = [];
+            for (let i = 1; i <= numWorkers; i++) {
+                const workerName = document.querySelector(`input[name="workerName${i}"]`).value;
+                const hoursWorked = document.querySelector(`input[name="hoursWorked${i}"]`).value;
+                workers.push({ name: workerName, hours: hoursWorked });
+            }
+
+            const canvas = document.getElementById('signaturePad');
+            const signatureDataURL = canvas.toDataURL();
+
+            const data = {
+                projectName,
+                supervisorName,
+                date,
+                workers,
+                signature: signatureDataURL
+            };
+
+            fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => response.json())
+              .then(result => {
+                  if (result.status === 'success') {
+                      alert('Data submitted successfully');
+                  } else {
+                      alert('Data submission failed');
+                  }
+              }).catch(error => {
+                  console.error('Error submitting data:', error);
+                  alert('An error occurred while submitting data');
+              });
+        }
+
+        document.addEventListener('DOMContentLoaded', initSignaturePad);
     </script>
 </head>
 <body>
     <div class="logo-container">
         <img src="https://i.ibb.co/QvkTBcb/Screenshot-2024-06-07-at-5-01-28-PM.png" alt="Project Logo">
     </div>
-    <h1>SDI Project Time Tracker</h1>
-    <form onsubmit="return validateForm()">
+    <h1>Project Time Tracker</h1>
+    <form onsubmit="handleSubmit(event)">
         <label for="projectName">Project Name:</label>
         <input type="text" id="projectName" name="projectName" required>
 
@@ -144,6 +226,11 @@
         <button type="button" onclick="generateWorkerFields()">Add Workers</button>
 
         <div id="workersContainer"></div>
+
+        <div class="signature-container">
+            <label for="signaturePad">Supervisor Signature:</label>
+            <canvas id="signaturePad"></canvas>
+        </div>
 
         <input type="submit" value="Submit">
     </form>
