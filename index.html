@@ -153,6 +153,10 @@
                 context.closePath();
             };
 
+            const clearSignature = () => {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
             // Mouse events
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
@@ -164,6 +168,9 @@
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', stopDrawing);
             canvas.addEventListener('touchcancel', stopDrawing);
+
+            // Clear button event
+            document.getElementById('clearSignature').addEventListener('click', clearSignature);
         }
 
         async function handleSubmit(event) {
@@ -185,25 +192,27 @@
             const canvas = document.getElementById('signaturePad');
             const signatureDataURL = canvas.toDataURL();
 
-            const data = {
-                projectName,
-                supervisorName,
-                date,
-                workers,
-                signature: signatureDataURL
-            };
+            const formData = new FormData();
+            formData.append('projectName', projectName);
+            formData.append('supervisorName', supervisorName);
+            formData.append('date', date);
+            formData.append('numWorkers', numWorkers);
+            workers.forEach((worker, index) => {
+                formData.append(`workerName${index + 1}`, worker.name);
+                formData.append(`hoursWorked${index + 1}`, worker.hours);
+            });
+            formData.append('signature', signatureDataURL);
 
             try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbwFeW0R3lY95ONtljaMDEoSjtrI76e_bKyoJlk8CyhcNHo9aKm_RLSKHZ_KopebkwdR1w/exec', {
+                const response = await fetch('https://formspree.io/f/mpzvgged', {
                     method: 'POST',
-                    body: JSON.stringify(data),
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Accept': 'application/json'
                     }
                 });
 
-                const result = await response.json();
-                if (result.status === 'success') {
+                if (response.ok) {
                     alert('Data submitted successfully');
                 } else {
                     alert('Data submission failed');
@@ -216,6 +225,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initSignaturePad();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').setAttribute('max', today);
             document.querySelector('form').addEventListener('submit', handleSubmit);
         });
     </script>
@@ -225,7 +236,7 @@
         <img src="https://i.ibb.co/QvkTBcb/Screenshot-2024-06-07-at-5-01-28-PM.png" alt="Project Logo">
     </div>
     <h1>Project Time Tracker</h1>
-    <form>
+    <form action="https://formspree.io/f/mpzvgged" method="POST">
         <label for="projectName">Project Name:</label>
         <input type="text" id="projectName" name="projectName" required>
 
@@ -247,6 +258,7 @@
         <div class="signature-container">
             <label for="signaturePad">Supervisor Signature:</label>
             <canvas id="signaturePad"></canvas>
+            <button type="button" id="clearSignature">Clear Signature</button>
         </div>
 
         <input type="submit" value="Submit">
