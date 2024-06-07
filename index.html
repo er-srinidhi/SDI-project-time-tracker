@@ -133,29 +133,38 @@
             const context = canvas.getContext('2d');
             let isDrawing = false;
 
-            canvas.addEventListener('mousedown', (event) => {
+            const startDrawing = (event) => {
                 isDrawing = true;
                 context.beginPath();
-                context.moveTo(event.offsetX, event.offsetY);
-            });
+                context.moveTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
+            };
 
-            canvas.addEventListener('mousemove', (event) => {
-                if (isDrawing) {
-                    context.lineTo(event.offsetX, event.offsetY);
-                    context.stroke();
-                }
-            });
+            const draw = (event) => {
+                if (!isDrawing) return;
+                event.preventDefault();
+                context.lineTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
+                context.stroke();
+            };
 
-            canvas.addEventListener('mouseup', () => {
+            const stopDrawing = () => {
                 isDrawing = false;
-            });
+                context.closePath();
+            };
 
-            canvas.addEventListener('mouseout', () => {
-                isDrawing = false;
-            });
+            // Mouse events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchcancel', stopDrawing);
         }
 
-        function handleSubmit(event) {
+        async function handleSubmit(event) {
             event.preventDefault();
 
             const projectName = document.getElementById('projectName').value;
@@ -181,23 +190,25 @@
                 signature: signatureDataURL
             };
 
-            fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
-                method: 'POST',
-                body: JSON.stringify(data),
-                headers: {
-                    'Content-Type': 'application/json'
+            try {
+                const response = await fetch('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL', {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('Data submitted successfully');
+                } else {
+                    alert('Data submission failed');
                 }
-            }).then(response => response.json())
-              .then(result => {
-                  if (result.status === 'success') {
-                      alert('Data submitted successfully');
-                  } else {
-                      alert('Data submission failed');
-                  }
-              }).catch(error => {
-                  console.error('Error submitting data:', error);
-                  alert('An error occurred while submitting data');
-              });
+            } catch (error) {
+                console.error('Error submitting data:', error);
+                alert('An error occurred while submitting data');
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initSignaturePad);
