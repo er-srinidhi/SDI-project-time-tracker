@@ -91,6 +91,7 @@
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.18/jspdf.plugin.autotable.min.js"></script>
   <script>
     function generateWorkerFields() {
       const numWorkers = document.getElementById('numWorkers').value;
@@ -269,46 +270,43 @@
       const canvas = document.getElementById('signaturePad');
       const signatureDataURL = canvas.toDataURL();
 
-      doc.setFontSize(18);
-      doc.text('SDI Project Time Tracker', 10, 10);
-      doc.setFontSize(12);
-      doc.text(`Project Name: ${projectName}`, 10, 20);
-      doc.text(`Supervisor Name: ${supervisorName}`, 10, 30);
-      doc.text(`Date: ${date}`, 10, 40);
-      doc.text('Workers:', 10, 50);
-
-      workers.forEach((worker, index) => {
-        doc.text(`${worker.name}: ${worker.hours} hours`, 10, 60 + index * 10);
-      });
+      const logoURL = 'https://i.ibb.co/QvkTBcb/Screenshot-2024-06-07-at-5-01-28-PM.png';
 
       const img = new Image();
-      img.src = signatureDataURL;
-      doc.addImage(img, 'PNG', 10, 70 + workers.length * 10, 180, 60);
+      img.src = logoURL;
+      img.onload = () => {
+        doc.addImage(img, 'PNG', 80, 10, 50, 20); // Centered logo
 
-      // Convert the PDF to a Blob
-      const pdfBlob = doc.output('blob');
+        doc.setFontSize(18);
+        doc.text('SDI Project Time Tracker', 10, 40);
+        doc.setFontSize(12);
+        doc.text(`Project Name: ${projectName}`, 10, 50);
+        doc.text(`Supervisor Name: ${supervisorName}`, 10, 60);
+        doc.text(`Date: ${date}`, 10, 70);
+        doc.text('Workers:', 10, 80);
 
-      // Create a URL for the Blob
-      const pdfUrl = URL.createObjectURL(pdfBlob);
+        // Adding Table Headers
+        doc.autoTable({
+          startY: 90,
+          head: [['Worker Name', 'Hours Worked']],
+          body: workers.map(worker => [worker.name, worker.hours]),
+        });
 
-      // Show the PDF download page
-      const downloadPage = window.open('', '_blank');
-      downloadPage.document.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Download Timesheet</title>
-        </head>
-        <body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #000; color: #fff;">
-          <a href="${pdfUrl}" download="timesheet.pdf" style="font-size: 20px; color: #ffffff; text-decoration: none; background: linear-gradient(135deg, #ffffff, #b30000); padding: 15px 30px; border-radius: 5px;">Click here to download the report</a>
-        </body>
-        </html>
-      `);
+        // Adding Signature
+        doc.setDrawColor(0);
+        const finalY = doc.autoTable.previous.finalY + 10;
+        doc.rect(10, finalY, 180, 40); // Draw a smaller rectangle for the signature
+        doc.addImage(signatureDataURL, 'PNG', 12, finalY + 2, 176, 36);
 
-      alert('Timesheet download started');
-      clearForm();
+        // Generate filename
+        const fileName = `${projectName}_${date}.pdf`;
+
+        // Save the PDF
+        doc.save(fileName);
+
+        alert('Timesheet download started');
+        clearForm();
+      };
     }
 
     document.addEventListener('DOMContentLoaded', () => {
