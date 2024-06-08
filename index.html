@@ -1,275 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDI Project Time Tracker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #000; /* Changed to black */
-            box-sizing: border-box;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDI Project Time Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #000; /* Changed to black */
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column; /* Centering elements vertically */
+    }
+    h1 {
+      text-align: center;
+      color: #fff; /* Changed to white for contrast */
+    }
+    .form-container {
+      width: 100%;
+      max-width: 600px;
+      background-color: #808080; /* Changed to grey */
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin: 20px 0; /* Add some margin to top and bottom */
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #fff; /* Changed to white for contrast */
+    }
+    input[type="text"], input[type="number"], input[type="date"] {
+      width: calc(100% - 20px);
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .worker {
+      margin-bottom: 20px;
+    }
+    button, input[type="submit"] {
+      display: inline-block;
+      padding: 10px 15px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #ff0000; /* Changed to red */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover, input[type="submit"]:hover {
+      background-color: #cc0000; /* Darker red for hover */
+    }
+    .flex-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .flex-container input[type="date"] {
+      width: calc(100% - 100px);
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo-container img {
+      width: 150px;
+      height: auto;
+    }
+    .signature-container {
+      margin-top: 20px;
+    }
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+      height: 200px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script>
+    function generateWorkerFields() {
+      const numWorkers = document.getElementById('numWorkers').value;
+      const workersContainer = document.getElementById('workersContainer');
+      workersContainer.innerHTML = '';
+
+      for (let i = 1; i <= numWorkers; i++) {
+        const workerDiv = document.createElement('div');
+        workerDiv.className = 'worker';
+
+        const nameLabel = document.createElement('label');
+        nameLabel.innerText = 'Worker ' + i + ' Name:';
+        workerDiv.appendChild(nameLabel);
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.name = 'workerName' + i;
+        nameInput.required = true;
+        workerDiv.appendChild(nameInput);
+
+        const hoursLabel = document.createElement('label');
+        hoursLabel.innerText = ' Hours Worked:';
+        workerDiv.appendChild(hoursLabel);
+
+        const hoursInput = document.createElement('input');
+        hoursInput.type = 'number';
+        hoursInput.name = 'hoursWorked' + i;
+        hoursInput.min = 0;
+        hoursInput.max = 24;
+        hoursInput.required = true;
+        workerDiv.appendChild(hoursInput);
+
+        workersContainer.appendChild(workerDiv);
+      }
+    }
+
+    function setToday() {
+      const dateInput = document.getElementById('date');
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+    }
+
+    function validateForm() {
+      const inputs = document.querySelectorAll('input[required]');
+      for (const input of inputs) {
+        if (!input.value) {
+          alert('Please fill all required fields.');
+          return false;
         }
-        h1 {
-            text-align: center;
-            color: #fff; /* Changed to white for contrast */
-        }
-        form {
-            background-color: #808080; /* Changed to grey */
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #fff; /* Changed to white for contrast */
-        }
-        input[type="text"], input[type="number"], input[type="date"] {
-            width: calc(100% - 20px);
-            padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .worker {
-            margin-bottom: 20px;
-        }
-        button, input[type="submit"] {
-            display: inline-block;
-            padding: 10px 15px;
-            font-size: 16px;
-            color: #fff;
-            background-color: #ff0000; /* Changed to red */
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover, input[type="submit"]:hover {
-            background-color: #cc0000; /* Darker red for hover */
-        }
-        .flex-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .flex-container input[type="date"] {
-            width: calc(100% - 100px);
-        }
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .logo-container img {
-            width: 150px;
-            height: auto;
-        }
-        .signature-container {
-            margin-top: 20px;
-        }
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-        canvas {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 100%;
-            height: 200px;
-        }
-    </style>
-    <script>
-        function generateWorkerFields() {
-            const numWorkers = document.getElementById('numWorkers').value;
-            const workersContainer = document.getElementById('workersContainer');
-            workersContainer.innerHTML = '';
+      }
+      return true;
+    }
 
-            for (let i = 1; i <= numWorkers; i++) {
-                const workerDiv = document.createElement('div');
-                workerDiv.className = 'worker';
+    function initSignaturePad() {
+      const canvas = document.getElementById('signaturePad');
+      const context = canvas.getContext('2d');
+      let isDrawing = false;
 
-                const nameLabel = document.createElement('label');
-                nameLabel.innerText = 'Worker ' + i + ' Name:';
-                workerDiv.appendChild(nameLabel);
+      const startDrawing = (event) => {
+        isDrawing = true;
+        context.beginPath();
+        context.moveTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
+      };
 
-                const nameInput = document.createElement('input');
-                nameInput.type = 'text';
-                nameInput.name = 'workerName' + i;
-                nameInput.required = true;
-                workerDiv.appendChild(nameInput);
+      const draw = (event) => {
+        if (!isDrawing) return;
+        event.preventDefault();
+        context.lineTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
+        context.stroke();
+      };
 
-                const hoursLabel = document.createElement('label');
-                hoursLabel.innerText = ' Hours Worked:';
-                workerDiv.appendChild(hoursLabel);
+      const stopDrawing = () => {
+        isDrawing = false;
+        context.closePath();
+      };
 
-                const hoursInput = document.createElement('input');
-                hoursInput.type = 'number';
-                hoursInput.name = 'hoursWorked' + i;
-                hoursInput.min = 0;
-                hoursInput.max = 24;
-                hoursInput.required = true;
-                workerDiv.appendChild(hoursInput);
+      const clearSignature = () => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+      };
 
-                workersContainer.appendChild(workerDiv);
-            }
-        }
+      // Mouse events
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
 
-        function setToday() {
-            const dateInput = document.getElementById('date');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
-        }
+      // Touch events
+      canvas.addEventListener('touchstart', startDrawing);
+      canvas.addEventListener('touchmove', draw);
+      canvas.addEventListener('touchend', stopDrawing);
+      canvas.addEventListener('touchcancel', stopDrawing);
 
-        function validateForm() {
-            const inputs = document.querySelectorAll('input[required]');
-            for (const input of inputs) {
-                if (!input.value) {
-                    alert('Please fill all required fields.');
-                    return false;
-                }
-            }
-            return true;
-        }
+      // Clear button event
+      document.getElementById('clearSignature').addEventListener('click', clearSignature);
+    }
 
-        function initSignaturePad() {
-            const canvas = document.getElementById('signaturePad');
-            const context = canvas.getContext('2d');
-            let isDrawing = false;
+    async function handleSubmit(event) {
+      event.preventDefault();
+      if (!validateForm()) return;
 
-            const startDrawing = (event) => {
-                isDrawing = true;
-                context.beginPath();
-                context.moveTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
-            };
+      const projectName = document.getElementById('projectName').value;
+      const supervisorName = document.getElementById('supervisorName').value;
+      const date = document.getElementById('date').value;
+      const numWorkers = document.getElementById('numWorkers').value;
 
-            const draw = (event) => {
-                if (!isDrawing) return;
-                event.preventDefault();
-                context.lineTo(event.offsetX || event.touches[0].clientX - canvas.offsetLeft, event.offsetY || event.touches[0].clientY - canvas.offsetTop);
-                context.stroke();
-            };
+      const workers = [];
+      for (let i = 1; i <= numWorkers; i++) {
+        const workerName = document.querySelector(`input[name="workerName${i}"]`).value;
+        const hoursWorked = document.querySelector(`input[name="hoursWorked${i}"]`).value;
+        workers.push({ name: workerName, hours: hoursWorked });
+      }
 
-            const stopDrawing = () => {
-                isDrawing = false;
-                context.closePath();
-            };
+      const canvas = document.getElementById('signaturePad');
+      const signatureDataURL = canvas.toDataURL();
 
-            const clearSignature = () => {
-                context.clearRect(0, 0, canvas.width, canvas.height);
-            };
+      const formData = new FormData();
+      formData.append('projectName', projectName);
+      formData.append('supervisorName', supervisorName);
+      formData.append('date', date);
+      formData.append('numWorkers', numWorkers);
+      workers.forEach((worker, index) => {
+        formData.append(`workerName${index + 1}`, worker.name);
+        formData.append(`hoursWorked${index + 1}`, worker.hours);
+      });
+      formData.append('signature', signatureDataURL);
 
-            // Mouse events
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-
-            // Touch events
-            canvas.addEventListener('touchstart', startDrawing);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', stopDrawing);
-            canvas.addEventListener('touchcancel', stopDrawing);
-
-            // Clear button event
-            document.getElementById('clearSignature').addEventListener('click', clearSignature);
-        }
-
-        async function handleSubmit(event) {
-            event.preventDefault();
-            if (!validateForm()) return;
-
-            const projectName = document.getElementById('projectName').value;
-            const supervisorName = document.getElementById('supervisorName').value;
-            const date = document.getElementById('date').value;
-            const numWorkers = document.getElementById('numWorkers').value;
-
-            const workers = [];
-            for (let i = 1; i <= numWorkers; i++) {
-                const workerName = document.querySelector(`input[name="workerName${i}"]`).value;
-                const hoursWorked = document.querySelector(`input[name="hoursWorked${i}"]`).value;
-                workers.push({ name: workerName, hours: hoursWorked });
-            }
-
-            const canvas = document.getElementById('signaturePad');
-            const signatureDataURL = canvas.toDataURL();
-
-            const formData = new FormData();
-            formData.append('projectName', projectName);
-            formData.append('supervisorName', supervisorName);
-            formData.append('date', date);
-            formData.append('numWorkers', numWorkers);
-            workers.forEach((worker, index) => {
-                formData.append(`workerName${index + 1}`, worker.name);
-                formData.append(`hoursWorked${index + 1}`, worker.hours);
-            });
-            formData.append('signature', signatureDataURL);
-
-            try {
-                const response = await fetch('https://formspree.io/f/mpzvgged', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    alert('Data submitted successfully');
-                } else {
-                    alert('Data submission failed');
-                }
-            } catch (error) {
-                console.error('Error submitting data:', error);
-                alert('An error occurred while submitting data');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initSignaturePad();
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('date').setAttribute('max', today);
-            document.querySelector('form').addEventListener('submit', handleSubmit);
+      try {
+        const response = await fetch('https://formspree.io/f/mpzvgged', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
         });
-    </script>
+
+        if (response.ok) {
+          alert('Data submitted successfully');
+          document.querySelector('form').reset(); // Clear the form
+          const workersContainer = document.getElementById('workersContainer');
+          workersContainer.innerHTML = ''; // Clear dynamic worker fields
+          const context = canvas.getContext('2d');
+          context.clearRect(0, 0, canvas.width, canvas.height); // Clear the signature
+        } else {
+          alert('Data submission failed');
+        }
+      } catch (error) {
+        console.error('Error submitting data:', error);
+        alert('An error occurred while submitting data');
+      }
+    }
+
+    function clearForm() {
+      document.querySelector('form').reset();
+      const workersContainer = document.getElementById('workersContainer');
+      workersContainer.innerHTML = ''; // Clear dynamic worker fields
+      const canvas = document.getElementById('signaturePad');
+      const context = canvas.getContext('2d');
+      context.clearRect(0, 0, canvas.width, canvas.height); // Clear the signature
+    }
+
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const projectName = document.getElementById('projectName').value;
+      const supervisorName = document.getElementById('supervisorName').value;
+      const date = document.getElementById('date').value;
+      const numWorkers = document.getElementById('numWorkers').value;
+
+      const workers = [];
+      for (let i = 1; i <= numWorkers; i++) {
+        const workerName = document.querySelector(`input[name="workerName${i}"]`).value;
+        const hoursWorked = document.querySelector(`input[name="hoursWorked${i}"]`).value;
+        workers.push({ name: workerName, hours: hoursWorked });
+      }
+
+      const canvas = document.getElementById('signaturePad');
+      const signatureDataURL = canvas.toDataURL();
+
+      doc.setFontSize(18);
+      doc.text('SDI Project Time Tracker', 10, 10);
+      doc.setFontSize(12);
+      doc.text(`Project Name: ${projectName}`, 10, 20);
+      doc.text(`Supervisor Name: ${supervisorName}`, 10, 30);
+      doc.text(`Date: ${date}`, 10, 40);
+      doc.text('Workers:', 10, 50);
+
+      workers.forEach((worker, index) => {
+        doc.text(`${worker.name}: ${worker.hours} hours`, 10, 60 + index * 10);
+      });
+
+      const img = new Image();
+      img.src = signatureDataURL;
+      doc.addImage(img, 'PNG', 10, 70 + workers.length * 10, 180, 60);
+
+      // Convert the PDF to a Blob
+      const pdfBlob = doc.output('blob');
+
+      // Create a URL for the Blob
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      // Show the PDF download page
+      const downloadPage = window.open('', '_blank');
+      downloadPage.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Download Timesheet</title>
+        </head>
+        <body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #000; color: #fff;">
+          <a href="${pdfUrl}" download="timesheet.pdf" style="font-size: 20px; color: #ff0000; text-decoration: none; background: linear-gradient(135deg, #ff0000, #b30000); padding: 15px 30px; border-radius: 5px;">Click here to download the report</a>
+        </body>
+        </html>
+      `);
+
+      alert('Timesheet download started');
+      clearForm();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSignaturePad();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date').setAttribute('max', today);
+      document.querySelector('form').addEventListener('submit', handleSubmit);
+    });
+  </script>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="https://i.ibb.co/QvkTBcb/Screenshot-2024-06-07-at-5-01-28-PM.png" alt="Project Logo">
-    </div>
-    <h1>SDI Project Time Tracker</h1>
-    <form action="https://formspree.io/f/mpzvgged" method="POST">
-        <label for="projectName">Project Name:</label>
-        <input type="text" id="projectName" name="projectName" required>
+  <div class="logo-container">
+    <img src="https://i.ibb.co/QvkTBcb/Screenshot-2024-06-07-at-5-01-28-PM.png" alt="Project Logo">
+  </div>
+  <h1>SDI Project Time Tracker</h1>
+  <div class="form-container">
+    <form>
+      <label for="projectName">Project Name:</label>
+      <input type="text" id="projectName" name="projectName" required>
 
-        <label for="supervisorName">Supervisor Name:</label>
-        <input type="text" id="supervisorName" name="supervisorName" required>
+      <label for="supervisorName">Supervisor Name:</label>
+      <input type="text" id="supervisorName" name="supervisorName" required>
 
-        <div class="flex-container">
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" required>
-            <button type="button" onclick="setToday()">Today</button>
+      <div class="flex-container">
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+        <button type="button" onclick="setToday()">Today</button>
+      </div>
+
+      <label for="numWorkers">Number of Workers on Site:</label>
+      <input type="number" id="numWorkers" name="numWorkers" min="1" required>
+      <button type="button" onclick="generateWorkerFields()">Add Workers</button>
+
+      <div id="workersContainer"></div>
+
+      <div class="signature-container">
+        <label for="signaturePad">Supervisor Signature:</label>
+        <canvas id="signaturePad"></canvas>
+        <div class="button-container">
+          <button type="button" id="clearSignature">Clear Signature</button>
+          <button type="button" onclick="clearForm()">Clear Form</button>
+          <input type="submit" value="Submit">
         </div>
-
-        <label for="numWorkers">Number of Workers on Site:</label>
-        <input type="number" id="numWorkers" name="numWorkers" min="1" required>
-                <button type="button" onclick="generateWorkerFields()">Add Workers</button>
-
-        <div id="workersContainer"></div>
-
-        <div class="signature-container">
-            <label for="signaturePad">Supervisor Signature:</label>
-            <canvas id="signaturePad"></canvas>
-            <div class="button-container">
-                <button type="button" id="clearSignature">Clear Signature</button>
-                <input type="submit" value="Submit">
-            </div>
-        </div>
+      </div>
+      <button type="button" onclick="generatePDF()" style="width: 100%; margin-top: 20px; padding: 12px; font-size: 16px; background: linear-gradient(135deg, #ff0000, #b30000); border: none; border-radius: 4px; color: #fff; cursor: pointer;">Generate PDF Timesheet</button>
     </form>
+  </div>
 </body>
 </html>
